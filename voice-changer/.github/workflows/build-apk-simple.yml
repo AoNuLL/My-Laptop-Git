@@ -1,0 +1,71 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git autoconf automake \
+            libtool libncurses5 libstdc++6 \
+            cmake ninja-build openjdk-17-jdk \
+            unzip zip curl python3-pip \
+            libffi-dev libssl-dev zlib1g-dev
+          
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
+      
+      - name: Install Buildozer
+        run: |
+          pip install buildozer cython==0.29.36 packaging
+      
+      - name: Create buildozer.spec
+        run: |
+          cd voice-changer/mobile
+          cat > buildozer.spec << 'SPEC'
+[app]
+title = Voice Changer
+package.name = voicechanger
+package.domain = org.monkeycode
+version = 2.1.4
+requirements = python3,kivy
+source.dir = ../
+source.include_exts = py,png,jpg,kv,atlas,json
+orientation = portrait
+android.api = 30
+android.minapi = 21
+android.ndk = 25
+android.permissions = RECORD_AUDIO,INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+android.archs = arm64-v8a
+SPEC
+      
+      - name: Create Android licenses
+        run: |
+          mkdir -p ~/.android/licenses
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > ~/.android/licenses/android-sdk-license
+      
+      - name: Build APK
+        run: |
+          cd voice-changer/mobile
+          yes | buildozer android debug
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoiceChanger-APK
+          path: voice-changer/mobile/bin/*.apk
+          if-no-files-found: error
