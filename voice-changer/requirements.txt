@@ -1,0 +1,27 @@
+# Voice Changer - 开源实时变声器
+# =====================================
+
+# 核心依赖
+numpy>=1.24.0
+pyaudio>=0.2.13
+sounddevice>=0.4.6
+soundfile>=0.12.1
+librosa>=0.10.0
+scipy>=1.10.0
+
+# RVC 相关依赖
+torch>=2.0.0
+torchaudio>=2.0.0
+onnxruntime>=1.15.0
+
+# GUI 界面
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# 音频处理
+webrtcvad>=2.0.10
+noisereduce>=3.0.0
+
+# 工具库
+requests>=2.31.0
+tqdm>=4.65.0
