@@ -1,0 +1,23 @@
+<resources>
+    <string-array name="sample_rate_entries">
+        <item>44100 Hz (高质量)</item>
+        <item>22050 Hz (标准)</item>
+        <item>16000 Hz (低质量)</item>
+    </string-array>
+    <string-array name="sample_rate_values">
+        <item>44100</item>
+        <item>22050</item>
+        <item>16000</item>
+    </string-array>
+    
+    <string-array name="audio_format_entries">
+        <item>WAV (无损)</item>
+        <item>MP3 (有损)</item>
+        <item>AAC (高效)</item>
+    </string-array>
+    <string-array name="audio_format_values">
+        <item>wav</item>
+        <item>mp3</item>
+        <item>aac</item>
+    </string-array>
+</resources>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="AI 模型管理"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="model_download_huggingface"
+            android:title="从 HuggingFace 下载"
+            android:summary="访问 HuggingFace 下载 RVC 模型"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="model_download_github"
+            android:title="从 GitHub 下载"
+            android:summary="访问 GitHub Releases 下载模型"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="录音设置"
+        app:iconSpaceReserved="false">
+
+        <ListPreference
+            android:key="sample_rate"
+            android:title="采样率"
+            android:entries="@array/sample_rate_entries"
+            android:entryValues="@array/sample_rate_values"
+            android:defaultValue="44100"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:key="audio_format"
+            android:title="音频格式"
+            android:entries="@array/audio_format_entries"
+            android:entryValues="@array/audio_format_values"
+            android:defaultValue="wav"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="关于"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="version"
+            android:title="版本"
+            android:summary="1.0.0"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
