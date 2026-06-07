@@ -1,0 +1,70 @@
+# GitHub Actions - 自动构建 Android APK
+# 使用此文件启用 GitHub 服务器自动构建
+
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'core/**'
+      - 'tools/**'
+      - 'requirements*.txt'
+  
+  # 手动触发
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      
+      - name: Install Buildozer dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential git bash autoconf automake \
+            libtool libncurses5 libstdc++6 \
+            cmake ninja-build \
+            openjdk-17-jdk \
+            unzip zip curl
+          
+          # 设置 Java
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+      
+      - name: Install Buildozer
+        run: |
+          pip install buildozer cython packaging
+      
+      - name: Setup Android environment
+        run: |
+          # Buildozer 会自动下载 Android SDK/NDK
+      
+      - name: Prepare build
+        run: |
+          cd mobile
+          # 确保 buildozer.spec 存在
+          ls -la
+      
+      - name: Build APK
+        run: |
+          cd mobile
+          buildozer android debug
+        timeout-minutes: 60
+        env:
+          ANDROID_HOME: $HOME/.buildozer/android/platform/build-android
+          ANDROID_SDK_HOME: $HOME/.buildozer/android/platform
+   
