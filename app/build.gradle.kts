@@ -12,8 +12,8 @@ android {
         applicationId = "com.ai.voicechanger"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 4
+        versionName = "1.1.0"
     }
 
     buildTypes {
@@ -63,6 +63,9 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    implementation("org.tensorflow:tensorflow-lite:2.13.0")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.13.0")
     
     kapt("androidx.room:room-compiler:2.6.1")
 }

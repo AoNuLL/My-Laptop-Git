@@ -3,6 +3,7 @@ package com.ai.voicechanger.data.local
 import android.content.Context
 import androidx.room.*
 import com.ai.voicechanger.AppApplication
+import com.ai.voicechanger.data.model.VoiceModel
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "audio_files")
@@ -56,10 +57,32 @@ interface VoicePackDao {
     suspend fun delete(pack: VoicePack)
 }
 
-@Database(entities = [AudioFile::class, VoicePack::class], version = 1)
+@Dao
+interface VoiceModelDao {
+    @Query("SELECT * FROM voice_models ORDER BY createdAt DESC")
+    fun getAll(): Flow<List<VoiceModel>>
+    
+    @Query("SELECT * FROM voice_models WHERE id = :id")
+    suspend fun getById(id: Long): VoiceModel?
+    
+    @Insert
+    suspend fun insert(model: VoiceModel): Long
+    
+    @Update
+    suspend fun update(model: VoiceModel)
+    
+    @Delete
+    suspend fun delete(model: VoiceModel)
+    
+    @Query("DELETE FROM voice_models WHERE id = :id")
+    suspend fun deleteById(id: Long)
+}
+
+@Database(entities = [AudioFile::class, VoicePack::class, VoiceModel::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun audioFileDao(): AudioFileDao
     abstract fun voicePackDao(): VoicePackDao
+    abstract fun voiceModelDao(): VoiceModelDao
     
     companion object {
         @Volatile private var instance: AppDatabase? = null

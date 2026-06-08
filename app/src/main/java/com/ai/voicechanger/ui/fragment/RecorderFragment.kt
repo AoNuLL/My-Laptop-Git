@@ -6,21 +6,29 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import com.ai.voicechanger.R
+import androidx.lifecycle.repeatOnLifecycle
 import com.ai.voicechanger.data.local.AudioFile
 import com.ai.voicechanger.data.local.AppDatabase
 import com.ai.voicechanger.data.local.FilePathManager
+import com.ai.voicechanger.data.model.VoiceModel
 import com.ai.voicechanger.databinding.FragmentRecorderBinding
+import com.ai.voicechanger.domain.processor.RVCInferenceModel
+import com.ai.voicechanger.domain.processor.RVCAudioProcessor
+import com.ai.voicechanger.domain.processor.RealTimeVoiceChanger
 import com.ai.voicechanger.domain.recorder.AudioRecorder
 import com.ai.voicechanger.domain.recorder.RecordingState
+import com.ai.voicechanger.domain.tflite.TFLiteModelLoader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,19 +36,25 @@ class RecorderFragment : Fragment() {
     private var _binding: FragmentRecorderBinding? = null
     private val binding get() = _binding!!
     
-    private lateinit var recorder: AudioRecorder
+    private lateinit var audioRecorder: AudioRecorder
     private lateinit var database: AppDatabase
+    private lateinit var voiceChanger: RealTimeVoiceChanger
+    private lateinit var model: RVCInferenceModel
+    private lateinit var audioProcessor: RVCAudioProcessor
     
     private var recordingStartTime: Long = 0
-    private var currentFile: java.io.File? = null
+    private var currentFile: File? = null
+    private var isRealTimeMode = false
+    private var currentModel: VoiceModel? = null
+    private var allModels: List<VoiceModel> = emptyList()
     
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.RECORD_AUDIO] == true) {
-            startRecording()
+            startNormalRecording()
         } else {
-            Toast.makeText(requireContext(), R.string.permission_required, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "需要录音权限", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -56,94 +70,244 @@ class RecorderFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        recorder = AudioRecorder()
+        audioRecorder = AudioRecorder()
         database = AppDatabase.get()
         
+        val modelLoader = TFLiteModelLoader(requireContext())
+        audioProcessor = RVCAudioProcessor()
+        model = RVCInferenceModel(modelLoader)
+        voiceChanger = RealTimeVoiceChanger(model, audioProcessor)
+        
         setupUI()
+        loadModels()
         observeRecordingState()
+        observeRealTimeState()
     }
     
     private fun setupUI() {
         binding.btnRecord.setOnClickListener {
-            if (recorder.recordingState.value is RecordingState.IDLE) {
-                checkPermissionsAndRecord()
+            if (isRealTimeMode) {
+                toggleRealTimeRecording()
             } else {
-                stopRecording()
+                toggleNormalRecording()
             }
+        }
+        
+        binding.switchVoiceChange.setOnCheckedChangeListener { _, isChecked ->
+            isRealTimeMode = isChecked
+            updateUIForMode()
+        }
+        
+        binding.pitchSlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                voiceChanger.setPitchChange(value)
+                binding.tvPitchLabel.text = "音调：${value.toInt()}半音"
+            }
+        }
+    }
+    
+    private fun loadModels() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                database.voiceModelDao().getAll().collectLatest { models ->
+                    allModels = models
+                    updateModelSpinner()
+                }
+            }
+        }
+    }
+    
+    private fun updateModelSpinner() {
+        val modelNames = allModels.map { "${it.name} (${it.fileSize / 1024 / 1024}MB)" }
+            .toTypedArray()
+        
+        if (modelNames.isEmpty()) {
+            modelNames.toMutableList().add("请先导入模型")
+        }
+        
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            modelNames
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.modelSpinner.adapter = adapter
+        
+        if (allModels.isNotEmpty()) {
+            currentModel = allModels[0]
+        }
+        
+        binding.modelSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                currentModel = allModels.getOrNull(position)
+                loadSelectedModel()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+    }
+    
+    private fun loadSelectedModel() {
+        currentModel?.let { modelInfo ->
+            lifecycleScope.launch {
+                try {
+                    val success = model.loadModel(modelInfo.modelPath, modelInfo.useGPU)
+                    if (success) {
+                        Toast.makeText(context, "模型加载成功", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "模型加载失败", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "模型加载失败：${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    private fun updateUIForMode() {
+        if (isRealTimeMode) {
+            binding.btnRecord.text = "开始变声"
+            binding.tvStatus.text = "实时变声模式"
+            binding.pitchSlider.visibility = View.VISIBLE
+            binding.tvPitchLabel.visibility = View.VISIBLE
+        } else {
+            binding.btnRecord.text = "开始录音"
+            binding.tvStatus.text = "普通录音模式"
+            binding.pitchSlider.visibility = View.GONE
+            binding.tvPitchLabel.visibility = View.GONE
+        }
+    }
+    
+    private fun toggleRealTimeRecording() {
+        if (currentModel == null) {
+            Toast.makeText(context, "请先选择模型", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (!model.isModelLoaded()) {
+            loadSelectedModel()
+        }
+        
+        if (voiceChanger.state.value == RealTimeVoiceChanger.State.IDLE ||
+            voiceChanger.state.value == RealTimeVoiceChanger.State.STOPPED) {
+            startRealTimeRecording()
+        } else {
+            stopRealTimeRecording()
+        }
+    }
+    
+    private fun startRealTimeRecording() {
+        lifecycleScope.launch {
+            try {
+                val result = voiceChanger.start()
+                result.onSuccess {
+                    binding.btnRecord.text = "停止变声"
+                    binding.tvStatus.text = "正在变声..."
+                    binding.timer.start()
+                    recordingStartTime = System.currentTimeMillis()
+                }
+                result.onFailure { error ->
+                    Toast.makeText(context, "启动失败：${error.message}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "启动失败：${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    private fun stopRealTimeRecording() {
+        voiceChanger.stop()
+        binding.btnRecord.text = "开始变声"
+        binding.tvStatus.text = "变声已停止"
+        binding.timer.stop()
+    }
+    
+    private fun observeRealTimeState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                voiceChanger.state.collectLatest { state ->
+                    when (state) {
+                        RealTimeVoiceChanger.State.RECORDING -> binding.tvStatus.text = "正在变声..."
+                        RealTimeVoiceChanger.State.PROCESSING -> binding.tvStatus.text = "处理中..."
+                        RealTimeVoiceChanger.State.STOPPED -> binding.tvStatus.text = "已停止"
+                        RealTimeVoiceChanger.State.ERROR -> binding.tvStatus.text = "发生错误"
+                        else -> {}
+                    }
+                }
+            }
+        }
+        
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                voiceChanger.latencyMs.collectLatest { latency ->
+                    binding.tvLatency.text = "延迟：${latency}ms"
+                }
+            }
+        }
+    }
+    
+    private fun toggleNormalRecording() {
+        if (audioRecorder.recordingState.value is RecordingState.IDLE) {
+            checkPermissionsAndRecord()
+        } else {
+            stopNormalRecording()
         }
     }
     
     private fun checkPermissionsAndRecord() {
-        when {
-            ContextCompat.checkSelfPermission(
+        if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                startRecording()
-            }
-            else -> {
-                permissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.RECORD_AUDIO,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    )
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startNormalRecording()
+        } else {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
                 )
-            }
+            )
         }
     }
     
-    private fun startRecording() {
+    private fun startNormalRecording() {
         currentFile = FilePathManager.createAudioFile("recording")
-        
-        val result = recorder.startRecording(currentFile!!)
+        val result = audioRecorder.startRecording(currentFile!!)
         
         if (result.isSuccess) {
             recordingStartTime = System.currentTimeMillis()
-            binding.btnRecord.text = getString(R.string.stop_recording)
+            binding.btnRecord.text = "停止录音"
             binding.tvStatus.text = "正在录音..."
-            startTimer()
+            binding.timer.start()
         } else {
-            Toast.makeText(
-                requireContext(),
-                "录音失败：${result.exceptionOrNull()?.message}",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(context, "录音失败：${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
-    private fun stopRecording() {
-        recorder.stopRecording()
-        binding.btnRecord.text = getString(R.string.start_recording)
+    private fun stopNormalRecording() {
+        audioRecorder.stopRecording()
+        binding.btnRecord.text = "开始录音"
         binding.tvStatus.text = "录音完成"
     }
     
-    private fun startTimer() {
-        binding.timer.start()
-    }
-    
     private fun observeRecordingState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            recorder.recordingState.collectLatest { state ->
+        lifecycleScope.launch {
+            audioRecorder.recordingState.collectLatest { state ->
                 when (state) {
                     is RecordingState.IDLE -> {
-                        binding.btnRecord.text = getString(R.string.start_recording)
+                        binding.btnRecord.text = "开始录音"
                         binding.tvStatus.text = "准备录音"
                         binding.timer.stop()
-                        
                         currentFile?.let { file ->
-                            if (file.exists()) {
+                            if (file.exists() && !isRealTimeMode) {
                                 saveToDatabase(file)
                             }
                         }
                     }
-                    is RecordingState.RECORDING -> {
-                        binding.tvStatus.text = "正在录音..."
-                    }
-                    is RecordingState.STOPPING -> {
-                        binding.tvStatus.text = "保存中..."
-                    }
+                    is RecordingState.RECORDING -> binding.tvStatus.text = "正在录音..."
+                    is RecordingState.STOPPING -> binding.tvStatus.text = "保存中..."
                     is RecordingState.ERROR -> {
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                         binding.tvStatus.text = "录音错误"
                     }
                 }
@@ -151,18 +315,17 @@ class RecorderFragment : Fragment() {
         }
     }
     
-    private fun saveToDatabase(file: java.io.File) {
-        viewLifecycleOwner.lifecycleScope.launch {
+    private fun saveToDatabase(file: File) {
+        val duration = System.currentTimeMillis() - recordingStartTime
+        val audioFile = AudioFile(
+            name = "录音_${formatDate()}",
+            filePath = file.absolutePath,
+            duration = duration,
+            createdAt = System.currentTimeMillis()
+        )
+        
+        lifecycleScope.launch {
             try {
-                val duration = (System.currentTimeMillis() - recordingStartTime)
-                
-                val audioFile = AudioFile(
-                    name = "录音_${formatDate()}",
-                    filePath = file.absolutePath,
-                    duration = duration,
-                    createdAt = System.currentTimeMillis()
-                )
-                
                 database.audioFileDao().insert(audioFile)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -171,13 +334,14 @@ class RecorderFragment : Fragment() {
     }
     
     private fun formatDate(): String {
-        return SimpleDateFormat("MMdd_HHmm", Locale.getDefault())
-            .format(Date(recordingStartTime))
+        return SimpleDateFormat("MMdd_HHmm", Locale.getDefault()).format(Date(recordingStartTime))
     }
     
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        recorder.release()
+        audioRecorder.release()
+        voiceChanger.stop()
+        model.close()
     }
 }
