@@ -1,34 +1,30 @@
 [
     {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_recorder.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/fragment_recorder.xml"
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_player.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/fragment_player.xml"
     },
     {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/item_voice_model.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/item_voice_model.xml"
-    },
-    {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_player.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/fragment_player.xml"
-    },
-    {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_model_manager.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/fragment_model_manager.xml"
-    },
-    {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/float_window.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/float_window.xml"
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/activity_main.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/activity_main.xml"
     },
     {
         "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_recorder.xml",
         "source": "com.ai.voicechanger.app-main-60:/layout/fragment_recorder.xml"
     },
     {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/activity_main.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/activity_main.xml"
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/fragment_model_manager.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/fragment_model_manager.xml"
     },
     {
-        "merged": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-mergeDebugResources-57:/layout/item_audio_file.xml",
-        "source": "/root/.gradle/daemon/8.2/com.ai.voicechanger.app-main-60:/layout/item_audio_file.xml"
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/item_audio_file.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/item_audio_file.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/item_voice_model.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/item_voice_model.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeDebugResources-57:/layout/float_window.xml",
+        "source": "com.ai.voicechanger.app-main-60:/layout/float_window.xml"
     }
 ]
