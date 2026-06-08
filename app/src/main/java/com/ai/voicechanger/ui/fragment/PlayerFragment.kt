@@ -7,7 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ai.voicechanger.data.local.AppDatabase
 import com.ai.voicechanger.data.local.AudioFile
@@ -41,11 +43,6 @@ class PlayerFragment : Fragment() {
         database = AppDatabase.get()
         audioPlayer = AudioPlayer()
         
-        setupRecyclerView()
-        loadAudioFiles()
-    }
-    
-    private fun setupRecyclerView() {
         adapter = VoicePackAdapter(
             emptyList(),
             onItemClick = { audioFile -> playAudio(audioFile) },
@@ -53,19 +50,13 @@ class PlayerFragment : Fragment() {
         )
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
-    }
-    
-    private fun loadAudioFiles() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            database.audioFileDao().getAll().collectLatest { files ->
-                adapter.updateFiles(files)
-                
-                if (files.isEmpty()) {
-                    binding.emptyView.visibility = View.VISIBLE
-                    binding.recyclerView.visibility = View.GONE
-                } else {
-                    binding.emptyView.visibility = View.GONE
-                    binding.recyclerView.visibility = View.VISIBLE
+        
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                database.audioFileDao().getAll().collectLatest { files ->
+                    adapter.updateFiles(files)
+                    binding.emptyView.visibility = if (files.isEmpty()) View.VISIBLE else View.GONE
+                    binding.recyclerView.visibility = if (files.isEmpty()) View.GONE else View.VISIBLE
                 }
             }
         }
@@ -75,32 +66,33 @@ class PlayerFragment : Fragment() {
         val file = File(audioFile.filePath)
         if (file.exists()) {
             audioPlayer.playFile(file)
+        } else {
+            AlertDialog.Builder(requireContext())
+                .setTitle("错误")
+                .setMessage("文件不存在")
+                .setPositiveButton("确定", null)
+                .show()
         }
     }
     
     private fun showDeleteConfirmation(audioFile: AudioFile) {
         AlertDialog.Builder(requireContext())
             .setTitle("确认删除")
-            .setMessage("确定要删除 \"${audioFile.name}\" 吗？")
+            .setMessage("确定要删除 ${audioFile.name} 吗？")
             .setPositiveButton("删除") { _, _ ->
-                deleteAudio(audioFile)
+                lifecycleScope.launch {
+                    try {
+                        val file = File(audioFile.filePath)
+                        if (file.exists() && file.delete()) {
+                            database.audioFileDao().delete(audioFile)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
             .setNegativeButton("取消", null)
             .show()
-    }
-    
-    private fun deleteAudio(audioFile: AudioFile) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                // 删除文件
-                File(audioFile.filePath).delete()
-                
-                // 删除数据库记录
-                database.audioFileDao().delete(audioFile)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
     
     override fun onDestroyView() {

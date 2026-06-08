@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/activity_main.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/fragment_player.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/fragment_player.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/fragment_recorder.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/fragment_recorder.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/item_voice_model.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/item_voice_model.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/float_window.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/float_window.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/fragment_model_manager.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/fragment_model_manager.xml"
+    },
+    {
+        "merged": "com.ai.voicechanger.app-mergeReleaseResources-57:/layout/item_audio_file.xml",
+        "source": "com.ai.voicechanger.app-main-59:/layout/item_audio_file.xml"
+    }
+]

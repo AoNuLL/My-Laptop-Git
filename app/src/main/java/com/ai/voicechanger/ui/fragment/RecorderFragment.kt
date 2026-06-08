@@ -14,8 +14,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.ai.voicechanger.data.local.AudioFile
 import com.ai.voicechanger.data.local.AppDatabase
+import com.ai.voicechanger.data.local.AudioFile
 import com.ai.voicechanger.data.local.FilePathManager
 import com.ai.voicechanger.data.model.VoiceModel
 import com.ai.voicechanger.databinding.FragmentRecorderBinding
@@ -27,7 +27,6 @@ import com.ai.voicechanger.domain.recorder.RecordingState
 import com.ai.voicechanger.domain.tflite.TFLiteModelLoader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -118,31 +117,26 @@ class RecorderFragment : Fragment() {
     }
     
     private fun updateModelSpinner() {
-        val modelNames = allModels.map { "${it.name} (${it.fileSize / 1024 / 1024}MB)" }
-            .toTypedArray()
-        
-        if (modelNames.isEmpty()) {
-            modelNames.toMutableList().add("请先导入模型")
-        }
+        val modelNames = allModels.map { "${it.name} (${it.fileSize / 1024 / 1024}MB)" }.toTypedArray()
+        val adapterName = if (modelNames.isEmpty()) arrayOf("请先导入模型") else modelNames
         
         val adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            modelNames
+            adapterName
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.modelSpinner.adapter = adapter
         
         if (allModels.isNotEmpty()) {
             currentModel = allModels[0]
-        }
-        
-        binding.modelSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                currentModel = allModels.getOrNull(position)
-                loadSelectedModel()
+            binding.modelSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    currentModel = allModels.getOrNull(position)
+                    loadSelectedModel()
+                }
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
             }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
     }
     
@@ -151,11 +145,7 @@ class RecorderFragment : Fragment() {
             lifecycleScope.launch {
                 try {
                     val success = model.loadModel(modelInfo.modelPath, modelInfo.useGPU)
-                    if (success) {
-                        Toast.makeText(context, "模型加载成功", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "模型加载失败", Toast.LENGTH_SHORT).show()
-                    }
+                    Toast.makeText(context, if (success) "模型加载成功" else "模型加载失败", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(context, "模型加载失败：${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -164,17 +154,10 @@ class RecorderFragment : Fragment() {
     }
     
     private fun updateUIForMode() {
-        if (isRealTimeMode) {
-            binding.btnRecord.text = "开始变声"
-            binding.tvStatus.text = "实时变声模式"
-            binding.pitchSlider.visibility = View.VISIBLE
-            binding.tvPitchLabel.visibility = View.VISIBLE
-        } else {
-            binding.btnRecord.text = "开始录音"
-            binding.tvStatus.text = "普通录音模式"
-            binding.pitchSlider.visibility = View.GONE
-            binding.tvPitchLabel.visibility = View.GONE
-        }
+        binding.btnRecord.text = if (isRealTimeMode) "开始变声" else "开始录音"
+        binding.tvStatus.text = if (isRealTimeMode) "实时变声模式" else "普通录音模式"
+        binding.pitchSlider.visibility = if (isRealTimeMode) View.VISIBLE else View.GONE
+        binding.tvPitchLabel.visibility = if (isRealTimeMode) View.VISIBLE else View.GONE
     }
     
     private fun toggleRealTimeRecording() {
@@ -202,7 +185,6 @@ class RecorderFragment : Fragment() {
                 result.onSuccess {
                     binding.btnRecord.text = "停止变声"
                     binding.tvStatus.text = "正在变声..."
-                    binding.timer.start()
                     recordingStartTime = System.currentTimeMillis()
                 }
                 result.onFailure { error ->
@@ -218,19 +200,18 @@ class RecorderFragment : Fragment() {
         voiceChanger.stop()
         binding.btnRecord.text = "开始变声"
         binding.tvStatus.text = "变声已停止"
-        binding.timer.stop()
     }
     
     private fun observeRealTimeState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 voiceChanger.state.collectLatest { state ->
-                    when (state) {
-                        RealTimeVoiceChanger.State.RECORDING -> binding.tvStatus.text = "正在变声..."
-                        RealTimeVoiceChanger.State.PROCESSING -> binding.tvStatus.text = "处理中..."
-                        RealTimeVoiceChanger.State.STOPPED -> binding.tvStatus.text = "已停止"
-                        RealTimeVoiceChanger.State.ERROR -> binding.tvStatus.text = "发生错误"
-                        else -> {}
+                    binding.tvStatus.text = when (state) {
+                        RealTimeVoiceChanger.State.RECORDING -> "正在变声..."
+                        RealTimeVoiceChanger.State.PROCESSING -> "处理中..."
+                        RealTimeVoiceChanger.State.STOPPED -> "已停止"
+                        RealTimeVoiceChanger.State.ERROR -> "发生错误"
+                        else -> "未知状态"
                     }
                 }
             }
@@ -278,7 +259,6 @@ class RecorderFragment : Fragment() {
             recordingStartTime = System.currentTimeMillis()
             binding.btnRecord.text = "停止录音"
             binding.tvStatus.text = "正在录音..."
-            binding.timer.start()
         } else {
             Toast.makeText(context, "录音失败：${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
         }
@@ -293,22 +273,21 @@ class RecorderFragment : Fragment() {
     private fun observeRecordingState() {
         lifecycleScope.launch {
             audioRecorder.recordingState.collectLatest { state ->
-                when (state) {
+                binding.btnRecord.text = "开始录音"
+                binding.tvStatus.text = when (state) {
                     is RecordingState.IDLE -> {
-                        binding.btnRecord.text = "开始录音"
-                        binding.tvStatus.text = "准备录音"
-                        binding.timer.stop()
                         currentFile?.let { file ->
                             if (file.exists() && !isRealTimeMode) {
                                 saveToDatabase(file)
                             }
                         }
+                        "准备录音"
                     }
-                    is RecordingState.RECORDING -> binding.tvStatus.text = "正在录音..."
-                    is RecordingState.STOPPING -> binding.tvStatus.text = "保存中..."
+                    is RecordingState.RECORDING -> "正在录音..."
+                    is RecordingState.STOPPING -> "保存中..."
                     is RecordingState.ERROR -> {
                         Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
-                        binding.tvStatus.text = "录音错误"
+                        "录音错误"
                     }
                 }
             }
