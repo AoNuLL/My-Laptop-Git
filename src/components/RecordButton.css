@@ -1,0 +1,110 @@
+.record-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.level-meters {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meter-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 28px;
+  text-align: right;
+}
+
+.meter-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.meter-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+
+.input-fill {
+  background: linear-gradient(to right, #a29bfe, #6c5ce7);
+}
+
+.output-fill {
+  background: linear-gradient(to right, #fd79a8, #e84393);
+}
+
+.record-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid rgba(108, 92, 231, 0.4);
+  background: rgba(108, 92, 231, 0.15);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.record-button:active {
+  transform: scale(0.95);
+}
+
+.record-button.active {
+  border-color: #e84393;
+  background: rgba(232, 67, 147, 0.15);
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(232, 67, 147, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(232, 67, 147, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 67, 147, 0); }
+}
+
+.record-button-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mic-icon {
+  color: #a29bfe;
+  display: flex;
+}
+
+.record-button.active .mic-icon {
+  color: #e84393;
+}
+
+.stop-icon {
+  width: 18px;
+  height: 18px;
+  background: #e84393;
+  border-radius: 4px;
+}
+
+.record-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: -2px;
+}

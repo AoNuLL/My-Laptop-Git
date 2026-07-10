@@ -1,0 +1,85 @@
+.model-download {
+  margin-top: 10px;
+}
+
+.download-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.download-toggle:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.download-icon {
+  font-size: 8px;
+}
+
+.download-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 0;
+}
+
+.download-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.download-item:active {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.download-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.download-item-name {
+  font-size: 12px;
+  color: #a29bfe;
+  font-weight: 500;
+}
+
+.download-item-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.download-item-size {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.2);
+  margin-top: 2px;
+}
+
+.download-arrow {
+  color: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.download-note {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.15);
+  line-height: 1.4;
+  margin-top: 4px;
+}

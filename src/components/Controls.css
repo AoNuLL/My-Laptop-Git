@@ -1,0 +1,75 @@
+.controls {
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.control-value {
+  font-size: 12px;
+  color: #a29bfe;
+  font-weight: 600;
+  background: rgba(108, 92, 231, 0.15);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #6c5ce7;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.4);
+}
+
+.pitch-slider {
+  background: linear-gradient(to right, #6c5ce7, #a29bfe, #fd79a8);
+}
+
+.formant-slider {
+  background: linear-gradient(to right, #00b894, #55efc4);
+}
+
+.gain-slider {
+  background: linear-gradient(to right, #636e72, #dfe6e9);
+}
+
+.reverb-slider {
+  background: linear-gradient(to right, #e17055, #fab1a0);
+}
+
+.noise-slider {
+  background: linear-gradient(to right, #0984e3, #74b9ff);
+}

@@ -1,0 +1,68 @@
+import { VoicePreset } from './index';
+
+export const VOICE_PRESETS: VoicePreset[] = [
+  {
+    id: 'original',
+    name: '原声',
+    description: '不经过任何处理的原声',
+    pitchShift: 0,
+    formantShift: 0,
+    icon: 'mic',
+  },
+  {
+    id: 'deep-male',
+    name: '低沉男声',
+    description: '深沉有磁性的男性声音',
+    pitchShift: -5,
+    formantShift: -3,
+    icon: 'male',
+  },
+  {
+    id: 'bright-female',
+    name: '明亮女声',
+    description: '明亮清脆的女性声音',
+    pitchShift: 5,
+    formantShift: 3,
+    icon: 'female',
+  },
+  {
+    id: 'loli',
+    name: '萝莉音',
+    description: '可爱活泼的萝莉音色',
+    pitchShift: 8,
+    formantShift: 6,
+    icon: 'child',
+  },
+  {
+    id: 'uncle',
+    name: '大叔音',
+    description: '成熟厚重的大叔音色',
+    pitchShift: -7,
+    formantShift: -5,
+    icon: 'person',
+  },
+  {
+    id: 'robot',
+    name: '机器人',
+    description: '机械化的电子音效果',
+    pitchShift: 2,
+    formantShift: 0,
+    icon: 'robot',
+  },
+  {
+    id: 'chipmunk',
+    name: '花栗鼠',
+    description: '超高速的可爱音效',
+    pitchShift: 12,
+    formantShift: 4,
+    icon: 'pet',
+  },
+  {
+    id: 'monster',
+    name: '怪物音',
+    description: '低沉恐怖的怪物声音',
+    pitchShift: -12,
+    formantShift: -8,
+    icon: 'monster',
+  },
+];
